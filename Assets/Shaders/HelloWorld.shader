@@ -18,9 +18,9 @@ Shader "Basics/HelloWorld"
         // Tags 告知 URP 渲染管线如何分类、排序和处理此 Shader
         Tags
         {
-            // 【关键】声明此 Shader 专用于 Universal Render Pipeline
+            // 【关键】声明此 Shader 专用于 Universal Pipeline
             // URP 仅识别带有此标签的 SubShader，缺失则回退到内置管线或紫色错误材质
-            "RenderPipeline" = "UniversalRenderPipeline"
+            "RenderPipeline" = "UniversalPipeline"
 
             // 标识渲染类型为不透明物体
             // URP 根据此标签决定何时调用该 Shader（如 Opaque 阶段而非 Transparent 阶段）
@@ -35,6 +35,9 @@ Shader "Basics/HelloWorld"
         // Pass 定义单次完整的绘制调用，一个 SubShader 可包含多个 Pass
         Pass
         {
+            Name "Unlit"
+            Tags { "LightMode" = "UniversalForward" }
+
             // 标记 HLSL 代码块起始，URP 统一使用 HLSL 语言（取代旧版 CG）
             HLSLPROGRAM
 
