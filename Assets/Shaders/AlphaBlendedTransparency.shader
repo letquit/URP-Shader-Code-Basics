@@ -39,6 +39,7 @@ Shader "Basics/AlphaBlendedTransparency"
             // 方括号语法允许从材质属性实时读取混合因子
             // 无需编写多个 Shader 变体即可支持 Additive、Multiply、Premultiplied 等多种混合
             Blend [_SrcBlend] [_DstBlend]
+            ZWrite Off
             
             HLSLPROGRAM
             #pragma vertex vert
