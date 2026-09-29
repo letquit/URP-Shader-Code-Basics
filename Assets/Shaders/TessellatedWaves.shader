@@ -4,7 +4,7 @@ Shader "Basics/TessellatedWaves"
     {
         _BaseColor("Base Color", Color) = (1,1,1,1)
         _BaseTexture("Base Texture", 2D) = "white" {}
-        _WaveHeigh("Wave Height", Range(0.0, 1.0)) = 0.25
+        _WaveHeight("Wave Height", Range(0.0, 1.0)) = 0.25
         _WaveSpeed("Wave Speed", Range(0.0, 10.0)) = 1.0
         
         // 细分强度：控制每条边最大细分数，值越大网格越密
@@ -49,7 +49,7 @@ Shader "Basics/TessellatedWaves"
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseColor;
                 float4 _BaseTexture_ST;
-                float _WaveHeigh;
+                float _WaveHeight;
                 float _WaveSpeed;
                 float _TessellationAmount;
                 float _TessellationFadeStart;
@@ -166,7 +166,7 @@ Shader "Basics/TessellatedWaves"
 
                 // 【关键】波浪位移在此处执行，而非顶点着色器
                 // 细分产生的新顶点同样参与波动，波形连续无锯齿
-                float waveHeight = sin(positionWS.x + positionWS.z + _Time.y * _WaveSpeed) * _WaveHeigh;
+                float waveHeight = sin(positionWS.x + positionWS.z + _Time.y * _WaveSpeed) * _WaveHeight;
                 float3 newPositionWS = float3(positionWS.x, positionWS.y + waveHeight, positionWS.z);
 
                 i.positionCS = TransformWorldToHClip(newPositionWS);

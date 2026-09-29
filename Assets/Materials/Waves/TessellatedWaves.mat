@@ -135,7 +135,7 @@ Material:
     - _TessellationAmount: 20
     - _TessellationFadeEnd: 50
     - _TessellationFadeStart: 30
-    - _WaveHeigh: 0.25
+    - _WaveHeight: 0.25
     - _WaveSpeed: 1
     - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1

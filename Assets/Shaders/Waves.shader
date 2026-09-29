@@ -6,7 +6,7 @@ Shader "Basics/Waves"
         _BaseTexture("Base Texture", 2D) = "white" {}
         
         // 波浪振幅：控制波峰与波谷的高度差
-        _WaveHeigh("Wave Height", Range(0.0, 1.0)) = 0.25
+        _WaveHeight("Wave Height", Range(0.0, 1.0)) = 0.25
         
         // 波浪频率/速度：值越大波动越快
         _WaveSpeed("Wave Speed", Range(0.0, 10.0)) = 1.0
@@ -50,7 +50,7 @@ Shader "Basics/Waves"
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseColor;
                 float4 _BaseTexture_ST;
-                float _WaveHeigh;
+                float _WaveHeight;
                 float _WaveSpeed;
             CBUFFER_END
 
@@ -80,8 +80,8 @@ Shader "Basics/Waves"
                 // 【核心】正弦波顶点位移
                 // positionWS.x + positionWS.z：沿对角线方向传播的平面波
                 // _Time.y * _WaveSpeed：时间驱动相位偏移，实现动态波动
-                // sin() 输出 [-1,1]，乘以 _WaveHeigh 控制振幅范围
-                float waveHeight = sin(positionWS.x + positionWS.z + _Time.y * _WaveSpeed) * _WaveHeigh;
+                // sin() 输出 [-1,1]，乘以 _WaveHeight 控制振幅范围
+                float waveHeight = sin(positionWS.x + positionWS.z + _Time.y * _WaveSpeed) * _WaveHeight;
                 
                 // 仅修改 Y 轴（垂直方向），XZ 平面位置保持不变
                 float3 newPositionWS = float3(positionWS.x, positionWS.y + waveHeight, positionWS.z);
