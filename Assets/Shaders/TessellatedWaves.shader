@@ -6,18 +6,18 @@ Shader "Basics/TessellatedWaves"
         _BaseTexture("Base Texture", 2D) = "white" {}
         _WaveHeight("Wave Height", Range(0.0, 1.0)) = 0.25
         _WaveSpeed("Wave Speed", Range(0.0, 10.0)) = 1.0
-        
+
         // 细分强度：控制每条边最大细分数，值越大网格越密
         _TessellationAmount("Tessellation Amount", Range(1.0, 64.0)) = 1.0
         // 距离衰减起始：超过此距离开始降低细分等级
         _TessellationFadeStart("Tessellation Fade Start", Float) = 25
         // 距离衰减结束：超过此距离细分等级降为1（无细分）
         _TessellationFadeEnd("Tessellation Fade End", Float) = 50
-        
+
         [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend("Source Blend Mode", Integer) = 5
         [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend("Destination Blend Mode", Integer) = 10
     }
- 
+
     SubShader
     {
         Tags
@@ -30,11 +30,14 @@ Shader "Basics/TessellatedWaves"
         Pass
         {
             Name "Unlit"
-            Tags { "LightMode" = "UniversalForward" }
-            
+            Tags
+            {
+                "LightMode" = "UniversalForward"
+            }
+
             Blend [_SrcBlend] [_DstBlend]
             ZWrite Off
-            
+
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -75,7 +78,7 @@ Shader "Basics/TessellatedWaves"
             // 细分因子输出结构：定义三角形三条边和内部的细分等级
             struct tessFactors
             {
-                float edge[3] : SV_TessFactor;      // 三边细分等级 [1, 64]
+                float edge[3] : SV_TessFactor; // 三边细分等级 [1, 64]
                 float inside : SV_InsideTessFactor; // 内部细分等级
             };
 
@@ -99,10 +102,10 @@ Shader "Basics/TessellatedWaves"
             // ==================== 外壳着色器 ====================
             // 直通模式：直接将输入控制点传递给域着色器
             // 真正的细分逻辑在 patchConstantFunc 中执行
-            [domain("tri")]                  // 三角形拓扑
-            [outputcontrolpoints(3)]         // 输出3个控制点（三角形）
-            [outputtopology("triangle_cw")]  // 顺时针绕序
-            [partitioning("integer")]        // 整数分割，避免裂缝
+            [domain("tri")] // 三角形拓扑
+            [outputcontrolpoints(3)] // 输出3个控制点（三角形）
+            [outputtopology("triangle_cw")] // 顺时针绕序
+            [partitioning("integer")] // 整数分割，避免裂缝
             [patchconstantfunc("patchConstantFunc")] // 绑定 Patch Constant 函数
             tessControlPoint hull(InputPatch<tessControlPoint, 3> patch, uint id : SV_OutputControlPointID)
             {
@@ -144,7 +147,7 @@ Shader "Basics/TessellatedWaves"
 
                 // 内部细分取三边平均值，保证内外密度一致
                 f.inside = (f.edge[0] + f.edge[1] + f.edge[2]) / 3.0f;
-                
+
                 return f;
             }
 
@@ -152,17 +155,18 @@ Shader "Basics/TessellatedWaves"
             // 【核心】在细分生成的新顶点上执行插值与波浪位移
             // barycentricCoordinates: 重心坐标，用于三个控制点的加权插值
             [domain("tri")]
-            t2f domain(tessFactors factors, OutputPatch<tessControlPoint, 3> patch, float3 barycentricCoordinates : SV_DomainLocation)
+            t2f domain(tessFactors factors, OutputPatch<tessControlPoint, 3> patch,
+                                                      float3 barycentricCoordinates : SV_DomainLocation)
             {
                 t2f i = (t2f)0;
 
                 // 重心坐标插值世界空间位置和UV
-                float3 positionWS = patch[0].positionWS * barycentricCoordinates.x 
-                                  + patch[1].positionWS * barycentricCoordinates.y 
-                                  + patch[2].positionWS * barycentricCoordinates.z;
-                float2 uv = patch[0].uv * barycentricCoordinates.x 
-                          + patch[1].uv * barycentricCoordinates.y 
-                          + patch[2].uv * barycentricCoordinates.z;
+                float3 positionWS = patch[0].positionWS * barycentricCoordinates.x
+                    + patch[1].positionWS * barycentricCoordinates.y
+                    + patch[2].positionWS * barycentricCoordinates.z;
+                float2 uv = patch[0].uv * barycentricCoordinates.x
+                    + patch[1].uv * barycentricCoordinates.y
+                    + patch[2].uv * barycentricCoordinates.z;
 
                 // 【关键】波浪位移在此处执行，而非顶点着色器
                 // 细分产生的新顶点同样参与波动，波形连续无锯齿
@@ -171,16 +175,15 @@ Shader "Basics/TessellatedWaves"
 
                 i.positionCS = TransformWorldToHClip(newPositionWS);
                 i.uv = uv;
-                
+
                 return i;
             }
 
             float4 frag(t2f i) : SV_TARGET
-            {                
+            {
                 float4 textureColor = SAMPLE_TEXTURE2D(_BaseTexture, sampler_BaseTexture, i.uv);
                 return textureColor * _BaseColor;
             }
-
             ENDHLSL
         }
     }

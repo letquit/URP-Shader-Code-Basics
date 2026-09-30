@@ -27,7 +27,10 @@ Shader "Basics/BasicLighting"
         // ==================== Pass 0: 主光照计算 ====================
         Pass
         {
-            Tags { "LightMode" = "UniversalForward" }
+            Tags
+            {
+                "LightMode" = "UniversalForward"
+            }
 
             ZWrite On
             ZTest LEqual
@@ -75,9 +78,9 @@ Shader "Basics/BasicLighting"
                 float4 positionCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
                 float3 normalWS : TEXCOORD1;
-                float3 positionWS : TEXCOORD2;   // 世界空间位置用于阴影坐标计算
-                float3 viewWS : TEXCOORD3;       // 视线方向用于高光与菲涅尔
-                float4 tangentWS : TEXCOORD4;    // xyz=切线方向, w=手性符号
+                float3 positionWS : TEXCOORD2; // 世界空间位置用于阴影坐标计算
+                float3 viewWS : TEXCOORD3; // 视线方向用于高光与菲涅尔
+                float4 tangentWS : TEXCOORD4; // xyz=切线方向, w=手性符号
             };
 
             v2f vert(appdata v)
@@ -105,9 +108,9 @@ Shader "Basics/BasicLighting"
                 Light mainLight = GetMainLight(shadowCoord);
 
                 // 合并距离衰减与阴影衰减到光照颜色中
-                float3 mainLightColor = mainLight.distanceAttenuation 
-                                      * mainLight.shadowAttenuation 
-                                      * mainLight.color;
+                float3 mainLightColor = mainLight.distanceAttenuation
+                    * mainLight.shadowAttenuation
+                    * mainLight.color;
 
                 // 球谐环境光：基于法线方向的三阶 SH9 近似
                 // 比固定 _AmbientLighting 更真实，能响应天空盒颜色变化
@@ -116,15 +119,15 @@ Shader "Basics/BasicLighting"
                 // ===== 法线贴图解码与 TBN 矩阵重建 =====
                 // UnpackNormalScale 将 [0,1] 纹理值还原为 [-1,1] 切线空间法线
                 float3 normalTS = UnpackNormalScale(
-                    SAMPLE_TEXTURE2D(_NormalTexture, sampler_NormalTexture, i.uv), 
+                    SAMPLE_TEXTURE2D(_NormalTexture, sampler_NormalTexture, i.uv),
                     _NormalStrength
                 );
 
                 // 【关键】副法线 = cross(N, T) * 手性符号 * 变换缩放校正
                 // unity_WorldTransformParams.w 补偿非均匀缩放对叉积长度的影响
-                float3 binormalWS = cross(normalWS, i.tangentWS.xyz) 
-                                  * i.tangentWS.w 
-                                  * unity_WorldTransformParams.w;
+                float3 binormalWS = cross(normalWS, i.tangentWS.xyz)
+                    * i.tangentWS.w
+                    * unity_WorldTransformParams.w;
 
                 // TBN 矩阵变换：切线空间法线 → 世界空间法线
                 normalWS = normalize(
@@ -141,23 +144,23 @@ Shader "Basics/BasicLighting"
                 // pow(2^n, glossiness) 将线性滑块映射为指数级高光锐度
                 float3 reflectedVector = reflect(-mainLight.direction, normalWS);
                 float3 specularLighting = pow(
-                    saturate(dot(reflectedVector, viewWS)), 
+                    saturate(dot(reflectedVector, viewWS)),
                     pow(2.0f, _Glossiness)
                 ) * mainLightColor;
 
                 // ===== Schlick 菲涅尔边缘光 =====
                 // 视角与法线夹角越大，反射越强；_FresnelPower 控制过渡曲线陡度
                 float3 fresnelLighting = pow(
-                    1.0f - saturate(dot(normalWS, viewWS)), 
+                    1.0f - saturate(dot(normalWS, viewWS)),
                     _FresnelPower
                 ) * _FresnelStrength;
 
                 // ===== 最终合成 =====
                 // 漫反射与环境光乘以 albedo（能量守恒），高光与菲涅尔直接叠加
                 float4 baseColor = SAMPLE_TEXTURE2D(_BaseTexture, sampler_BaseTexture, i.uv) * _BaseColor;
-                float3 finalColor = (ambientLighting + diffuseLighting) * baseColor.rgb 
-                                  + specularLighting 
-                                  + fresnelLighting;
+                float3 finalColor = (ambientLighting + diffuseLighting) * baseColor.rgb
+                    + specularLighting
+                    + fresnelLighting;
 
                 return float4(finalColor, baseColor.a);
             }
@@ -167,7 +170,10 @@ Shader "Basics/BasicLighting"
         // ==================== Pass 1: 阴影投射 ====================
         Pass
         {
-            Tags { "LightMode" = "ShadowCaster" }
+            Tags
+            {
+                "LightMode" = "ShadowCaster"
+            }
             ZWrite On
             ColorMask 0 // 阴影 Pass 只写深度，不输出颜色
 
@@ -185,8 +191,16 @@ Shader "Basics/BasicLighting"
             float3 _LightDirection;
             float3 _LightPosition;
 
-            struct appdata { float4 positionOS : POSITION; float3 normalOS : NORMAL; };
-            struct v2f { float4 positionCS : SV_POSITION; };
+            struct appdata
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS : NORMAL;
+            };
+
+            struct v2f
+            {
+                float4 positionCS : SV_POSITION;
+            };
 
             // 【核心】阴影偏移与裁剪
             // ApplyShadowBias: 沿光照方向偏移顶点，消除自阴影痤疮
@@ -196,11 +210,11 @@ Shader "Basics/BasicLighting"
                 float3 positionWS = TransformObjectToWorld(positionOS);
                 float3 normalWS = TransformObjectToWorldNormal(normalOS);
 
-            #if _CASTING_PUNCTUAL_LIGHT_SHADOW
+                #if _CASTING_PUNCTUAL_LIGHT_SHADOW
                 float3 lightDirectionWS = normalize(_LightPosition - positionWS);
-            #else
+                #else
                 float3 lightDirectionWS = _LightDirection;
-            #endif
+                #endif
 
                 float4 positionCS = TransformWorldToHClip(
                     ApplyShadowBias(positionWS, normalWS, lightDirectionWS)
@@ -224,7 +238,10 @@ Shader "Basics/BasicLighting"
         // ==================== Pass 2: 纯深度写入 ====================
         Pass
         {
-            Tags { "LightMode" = "DepthOnly" }
+            Tags
+            {
+                "LightMode" = "DepthOnly"
+            }
             ZWrite On
             ColorMask R
 
@@ -233,8 +250,15 @@ Shader "Basics/BasicLighting"
             #pragma fragment depthOnlyFrag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-            struct appdata { float4 positionOS : POSITION; };
-            struct v2f { float4 positionCS : SV_POSITION; };
+            struct appdata
+            {
+                float4 positionOS : POSITION;
+            };
+
+            struct v2f
+            {
+                float4 positionCS : SV_POSITION;
+            };
 
             v2f depthOnlyVert(appdata v)
             {
@@ -242,6 +266,7 @@ Shader "Basics/BasicLighting"
                 o.positionCS = TransformObjectToHClip(v.positionOS.xyz);
                 return o;
             }
+
             float depthOnlyFrag(v2f i) : SV_TARGET { return i.positionCS.z; }
             ENDHLSL
         }
@@ -249,7 +274,10 @@ Shader "Basics/BasicLighting"
         // ==================== Pass 3: 深度+法线编码 ====================
         Pass
         {
-            Tags { "LightMode" = "DepthNormals" }
+            Tags
+            {
+                "LightMode" = "DepthNormals"
+            }
             ZWrite On
 
             HLSLPROGRAM
@@ -305,12 +333,12 @@ Shader "Basics/BasicLighting"
             {
                 float3 normalWS = NormalizeNormalPerPixel(i.normalWS);
                 float3 normalTS = UnpackNormalScale(
-                    SAMPLE_TEXTURE2D(_NormalTexture, sampler_NormalTexture, i.uv), 
+                    SAMPLE_TEXTURE2D(_NormalTexture, sampler_NormalTexture, i.uv),
                     _NormalStrength
                 );
-                float3 binormalWS = cross(normalWS, i.tangentWS.xyz) 
-                                  * i.tangentWS.w 
-                                  * unity_WorldTransformParams.w;
+                float3 binormalWS = cross(normalWS, i.tangentWS.xyz)
+                    * i.tangentWS.w
+                    * unity_WorldTransformParams.w;
                 normalWS = normalize(
                     normalTS.x * i.tangentWS.xyz +
                     normalTS.y * binormalWS +

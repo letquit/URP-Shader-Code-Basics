@@ -21,7 +21,10 @@ Shader "Basics/ScrollingTextures"
         Pass
         {
             Name "Unlit"
-            Tags { "LightMode" = "UniversalForward" }
+            Tags
+            {
+                "LightMode" = "UniversalForward"
+            }
 
             HLSLPROGRAM
             #pragma vertex vert
@@ -92,13 +95,15 @@ Shader "Basics/ScrollingTextures"
 
                 return textureColor * _BaseColor;
             }
-
             ENDHLSL
         }
 
         Pass
         {
-            Tags { "LightMode" = "DepthOnly" }
+            Tags
+            {
+                "LightMode" = "DepthOnly"
+            }
 
             ZWrite On
             ColorMask R
@@ -135,7 +140,10 @@ Shader "Basics/ScrollingTextures"
 
         Pass
         {
-            Tags { "LightMode" = "DepthNormals" }
+            Tags
+            {
+                "LightMode" = "DepthNormals"
+            }
 
             ZWrite On
 

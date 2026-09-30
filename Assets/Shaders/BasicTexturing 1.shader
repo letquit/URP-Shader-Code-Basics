@@ -17,9 +17,12 @@ Shader "Basics/BasicTexturing 1"
 
         // ==================== Pass 0: 主颜色输出 ====================
         Pass
-        {            
-            Tags { "LightMode" = "SRPDefaultUnlit" }
-            
+        {
+            Tags
+            {
+                "LightMode" = "SRPDefaultUnlit"
+            }
+
             // 【显式声明】虽然 Opaque 队列默认开启这些状态，
             // 但显式写出可避免后续修改 Queue 时遗漏导致渲染错误
             ZWrite On
@@ -76,22 +79,32 @@ Shader "Basics/BasicTexturing 1"
             // 1. 阴影贴图生成（当 ShadowCaster 缺失时的回退）
             // 2. 深度预填充（Depth Prepass）
             // 3. 屏幕空间特效的深度采样源
-            Tags { "LightMode" = "DepthOnly" }
-            
+            Tags
+            {
+                "LightMode" = "DepthOnly"
+            }
+
             ZWrite On
             // 【优化】ColorMask R 仅写入红色通道
             // 深度信息实际由 ZWrite 写入深度缓冲，颜色缓冲写入被最小化
             // 相比 ColorMask 0（完全禁止），R 通道保留可避免某些 GPU 驱动的空片元优化问题
             ColorMask R
-            
+
             HLSLPROGRAM
             #pragma vertex depthOnlyVert
             #pragma fragment depthOnlyFrag
-            
+
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            
-            struct appdata { float4 positionOS : POSITION; };
-            struct v2f { float4 positionCS : SV_POSITION; };
+
+            struct appdata
+            {
+                float4 positionOS : POSITION;
+            };
+
+            struct v2f
+            {
+                float4 positionCS : SV_POSITION;
+            };
 
             v2f depthOnlyVert(appdata v)
             {
@@ -113,16 +126,19 @@ Shader "Basics/BasicTexturing 1"
         {
             // 【关键】URP 的后处理效果（SSAO、SSR、Outline）依赖此 Pass
             // 将世界空间法线编码到 RGBA 输出，同时写入深度缓冲
-            Tags { "LightMode" = "DepthNormals" }
-            
+            Tags
+            {
+                "LightMode" = "DepthNormals"
+            }
+
             ZWrite On
-            
+
             HLSLPROGRAM
             #pragma vertex depthNormalsVert
             #pragma fragment depthNormalsFrag
-            
+
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            
+
             struct appdata
             {
                 float4 positionOS : POSITION;
@@ -139,7 +155,7 @@ Shader "Basics/BasicTexturing 1"
             {
                 v2f o = (v2f)0;
                 o.positionCS = TransformObjectToHClip(v.positionOS.xyz);
-                
+
                 // 模型空间法线 → 世界空间法线
                 float3 normalWS = TransformObjectToWorldNormal(v.normalOS);
                 // 顶点级归一化：减少片元插值后的长度偏差

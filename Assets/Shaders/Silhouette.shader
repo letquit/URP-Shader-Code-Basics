@@ -9,7 +9,7 @@ Shader "Basics/Silhouette"
     }
 
     SubShader
-    {        
+    {
         Tags
         {
             "RenderPipeline" = "UniversalPipeline"
@@ -21,8 +21,11 @@ Shader "Basics/Silhouette"
 
         Pass
         {
-            Tags { "LightMode" = "UniversalForward" }
-            
+            Tags
+            {
+                "LightMode" = "UniversalForward"
+            }
+
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -54,15 +57,15 @@ Shader "Basics/Silhouette"
             v2f vert(appdata v)
             {
                 v2f o = (v2f)0;
-                
+
                 // 模型空间 → 裁剪空间变换
                 o.positionCS = TransformObjectToHClip(v.positionOS.xyz);
-                
+
                 // 【核心】计算齐次屏幕坐标
                 // 返回值为 (x*w, y*w, z*w, w)，其中 xy/w 即归一化屏幕 UV [0,1]
                 // 必须在顶点阶段计算并传递，避免片元阶段重复投影运算
                 o.positionSS = ComputeScreenPos(o.positionCS);
-                
+
                 return o;
             }
 
@@ -71,7 +74,7 @@ Shader "Basics/Silhouette"
                 // 透视除法：将齐次坐标转换为归一化屏幕 UV
                 // i.positionSS.w 在光栅化阶段已被插值，此处除法是安全的
                 float2 screenUV = i.positionSS.xy / i.positionSS.w;
-                
+
                 // 【核心】采样场景深度缓冲
                 // 返回原始非线性深度值（0=近裁剪面, 1=远裁剪面）
                 // 该值来自之前不透明 Pass 写入的深度缓冲，不包含当前透明物体自身
@@ -81,13 +84,12 @@ Shader "Basics/Silhouette"
                 // _ZBufferParams 由 URP 自动上传，包含近/远裁剪面信息
                 // 线性深度使颜色插值在视觉上均匀分布，避免近处压缩远处拉伸
                 float linearDepth = Linear01Depth(rawDepth, _ZBufferParams);
-                
+
                 // 根据线性深度在前景色与背景色之间插值
                 // depth=0 (最近) → 纯前景色；depth=1 (最远) → 纯背景色
                 // 中间深度产生平滑过渡，形成自然的剪影渐变效果
                 return lerp(_ForegroundColor, _BackgroundColor, linearDepth);
             }
-
             ENDHLSL
         }
     }

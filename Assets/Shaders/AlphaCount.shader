@@ -4,7 +4,7 @@ Shader "Basics/AlphaCount"
     {
         _BaseColor("Base Color", Color) = (1,1,1,1)
         _BaseTexture("Base Texture", 2D) = "white" {}
-        
+
         // 透明度裁剪阈值：低于此值的像素将被完全丢弃
         // Range(0,1) 在 Inspector 中生成滑块，便于美术实时调整镂空边缘
         _AlphaThreshold("Alpha Threshold", Range(0, 1)) = 0.5
@@ -15,12 +15,12 @@ Shader "Basics/AlphaCount"
         Tags
         {
             "RenderPipeline" = "UniversalPipeline"
-            
+
             // 【关键】RenderType 标记为 Opaque 而非 Transparent
             // Alpha Test 物体本质上仍是不透明的（每个存活像素 Alpha=1）
             // URP 将其归入不透明光照计算路径，支持阴影投射与深度写入
             "RenderType" = "Opaque"
-            
+
             // 【关键】Queue 设为 AlphaTest（2450）
             // 位于 Geometry(2000) 之后、Transparent(3000) 之前
             // 确保镂空物体在不透明物体之后绘制（避免遮挡问题），同时早于透明物体（避免排序冲突）
@@ -30,7 +30,10 @@ Shader "Basics/AlphaCount"
         Pass
         {
             Name "Unlit"
-            Tags { "LightMode" = "UniversalForward" }
+            Tags
+            {
+                "LightMode" = "UniversalForward"
+            }
 
             HLSLPROGRAM
             #pragma vertex vert
@@ -46,10 +49,10 @@ Shader "Basics/AlphaCount"
                 // 阈值作为逐材质属性纳入 SRP Batcher 常量缓冲
                 float _AlphaThreshold;
             CBUFFER_END
-            
+
             TEXTURE2D(_BaseTexture);
             SAMPLER(sampler_BaseTexture);
-            
+
             struct appdata
             {
                 float4 positionOS : POSITION;
@@ -81,24 +84,26 @@ Shader "Basics/AlphaCount"
             float4 frag(v2f i) : SV_TARGET
             {
                 UNITY_SETUP_INSTANCE_ID(i);
-                
+
                 float4 outputColor = SAMPLE_TEXTURE2D(_BaseTexture, sampler_BaseTexture, i.uv) * _BaseColor;
-                
+
                 // 【核心】Alpha 裁剪指令
                 // clip(x) 当 x < 0 时立即终止当前片元处理，不写入颜色/深度缓冲
                 // 等价于 if (outputColor.a < _AlphaThreshold) discard;
                 // 但 clip 是 GPU 原生指令，编译器可优化分支预测，性能优于显式 if-discard
                 clip(outputColor.a - _AlphaThreshold);
-                
+
                 return outputColor;
             }
-
             ENDHLSL
         }
 
         Pass
         {
-            Tags { "LightMode" = "DepthOnly" }
+            Tags
+            {
+                "LightMode" = "DepthOnly"
+            }
 
             ZWrite On
             ColorMask R
@@ -149,7 +154,10 @@ Shader "Basics/AlphaCount"
 
         Pass
         {
-            Tags { "LightMode" = "DepthNormals" }
+            Tags
+            {
+                "LightMode" = "DepthNormals"
+            }
 
             ZWrite On
 

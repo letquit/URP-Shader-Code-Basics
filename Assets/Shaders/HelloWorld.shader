@@ -30,17 +30,19 @@ Shader "Basics/HelloWorld"
             // Geometry(2000) 为标准不透明物体队列，确保在天空盒之后、透明物体之前绘制
             "Queue" = "Geometry"
         }
-        
+
         // ==================== 渲染通道 ====================
         // Pass 定义单次完整的绘制调用，一个 SubShader 可包含多个 Pass
         Pass
         {
             Name "Unlit"
-            Tags { "LightMode" = "UniversalForward" }
+            Tags
+            {
+                "LightMode" = "UniversalForward"
+            }
 
             // 标记 HLSL 代码块起始，URP 统一使用 HLSL 语言（取代旧版 CG）
             HLSLPROGRAM
-
             // 编译指令：指定顶点着色器入口函数名为 vert
             #pragma vertex vert
             // 编译指令：指定片元着色器入口函数名为 frag
@@ -94,14 +96,17 @@ Shader "Basics/HelloWorld"
                 // 作为 Hello World 示例，验证 Shader 编译、数据传递与渲染管线集成是否正常
                 return _BaseColor;
             }
-            
+
             // 标记 HLSL 代码块结束
             ENDHLSL
         }
 
         Pass
         {
-            Tags { "LightMode" = "DepthOnly" }
+            Tags
+            {
+                "LightMode" = "DepthOnly"
+            }
 
             ZWrite On
             ColorMask R
@@ -138,7 +143,10 @@ Shader "Basics/HelloWorld"
 
         Pass
         {
-            Tags { "LightMode" = "DepthNormals" }
+            Tags
+            {
+                "LightMode" = "DepthNormals"
+            }
 
             ZWrite On
 

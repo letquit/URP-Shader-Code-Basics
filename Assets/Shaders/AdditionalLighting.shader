@@ -24,7 +24,10 @@ Shader "Basics/AdditionalLighting"
         // ==================== Pass 0: 主光照 + 附加光照 ====================
         Pass
         {
-            Tags { "LightMode" = "UniversalForward" }
+            Tags
+            {
+                "LightMode" = "UniversalForward"
+            }
 
             ZWrite On
             ZTest LEqual
@@ -36,19 +39,19 @@ Shader "Basics/AdditionalLighting"
             // 主光源阴影变体
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
-            
+
             // 【新增】光照 Cookie 支持（聚光灯/方向光的纹理遮罩）
             #pragma multi_compile_fragment _ _LIGHT_COOKIES
-            
+
             // 【核心】附加光源编译指令
             // _ADDITIONAL_LIGHTS_VERTEX: 顶点级计算附加光（性能优先，精度低）
             // _ADDITIONAL_LIGHTS: 片元级计算附加光（质量优先，默认推荐）
             // 两者互斥，由 URP Asset 中的 Additional Lights 设置决定
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
-            
+
             // 附加光源阴影（仅当 URP Asset 开启 Additional Shadows 时生效）
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
-            
+
             // 【关键】Clustered Light Loop 支持
             // URP 14+ 引入的聚类光照剔除，替代传统逐光源遍历
             // 大幅减少无效光源计算，尤其适用于大量局部光源场景
@@ -103,11 +106,11 @@ Shader "Basics/AdditionalLighting"
                 o.positionWS = TransformObjectToWorld(v.positionOS.xyz);
                 o.viewWS = GetWorldSpaceViewDir(o.positionWS);
                 o.tangentWS = float4(TransformObjectToWorldDir(v.tangentOS.xyz), v.tangentOS.w);
-                
+
                 // 【新增】应用动态光照贴图的 Tiling/Offset 变换
                 // unity_DynamicLightmapST 由 Lightmap 系统自动设置
-                o.dynamicLightmapUV = v.dynamicLightmapUV.xy * unity_DynamicLightmapST.xy 
-                                    + unity_DynamicLightmapST.zw;
+                o.dynamicLightmapUV = v.dynamicLightmapUV.xy * unity_DynamicLightmapST.xy
+                    + unity_DynamicLightmapST.zw;
                 return o;
             }
 
@@ -116,7 +119,7 @@ Shader "Basics/AdditionalLighting"
                 float3 normalWS = NormalizeNormalPerPixel(i.normalWS);
                 float3 viewWS = normalize(i.viewWS);
                 float4 shadowCoord = TransformWorldToShadowCoord(i.positionWS);
-                
+
                 // 【新增】采样 Shadow Mask 纹理
                 // 存储烘焙光照的阴影信息，用于混合实时光与烘焙光的阴影过渡
                 // 在 Mixed 光照模式下避免实时阴影与烘焙阴影的硬切换
@@ -124,12 +127,12 @@ Shader "Basics/AdditionalLighting"
 
                 // ===== 法线贴图解码（同基础版）=====
                 float3 normalTS = UnpackNormalScale(
-                    SAMPLE_TEXTURE2D(_NormalTexture, sampler_NormalTexture, i.uv), 
+                    SAMPLE_TEXTURE2D(_NormalTexture, sampler_NormalTexture, i.uv),
                     _NormalStrength
                 );
-                float3 binormalWS = cross(normalWS, i.tangentWS.xyz) 
-                                  * i.tangentWS.w 
-                                  * unity_WorldTransformParams.w;
+                float3 binormalWS = cross(normalWS, i.tangentWS.xyz)
+                    * i.tangentWS.w
+                    * unity_WorldTransformParams.w;
                 normalWS = normalize(
                     normalTS.x * i.tangentWS.xyz +
                     normalTS.y * binormalWS +
@@ -138,19 +141,19 @@ Shader "Basics/AdditionalLighting"
 
                 // ===== 主光源计算 =====
                 Light mainLight = GetMainLight(shadowCoord);
-                float3 mainLightColor = mainLight.distanceAttenuation 
-                                      * mainLight.shadowAttenuation 
-                                      * mainLight.color;
+                float3 mainLightColor = mainLight.distanceAttenuation
+                    * mainLight.shadowAttenuation
+                    * mainLight.color;
 
                 float3 ambientLighting = SampleSH(normalWS);
                 float3 diffuseLighting = saturate(dot(normalWS, mainLight.direction)) * mainLightColor;
                 float3 reflectedVector = reflect(-mainLight.direction, normalWS);
                 float3 specularLighting = pow(
-                    saturate(dot(reflectedVector, viewWS)), 
+                    saturate(dot(reflectedVector, viewWS)),
                     pow(2.0f, _Glossiness)
                 ) * mainLightColor;
                 float3 fresnelLighting = pow(
-                    1.0f - saturate(dot(normalWS, viewWS)), 
+                    1.0f - saturate(dot(normalWS, viewWS)),
                     _FresnelPower
                 ) * _FresnelStrength;
 
@@ -172,21 +175,21 @@ Shader "Basics/AdditionalLighting"
                 // 开发者只需关注单光源的光照计算，无需手动管理光源数组
                 LIGHT_LOOP_BEGIN(lightCount)
 
-                    // 获取第 lightIndex 个附加光源的完整信息
-                    // shadowMask 传入以支持 Mixed 模式下的阴影混合
-                    Light light = GetAdditionalLight(lightIndex, i.positionWS, shadowMask);
-                    
-                    float3 lightColor = light.distanceAttenuation 
-                                      * light.shadowAttenuation 
-                                      * light.color;
+                // 获取第 lightIndex 个附加光源的完整信息
+                // shadowMask 传入以支持 Mixed 模式下的阴影混合
+                Light light = GetAdditionalLight(lightIndex, i.positionWS, shadowMask);
 
-                    // 累加漫反射与镜面反射（菲涅尔通常仅对主光计算，避免多光源叠加过亮）
-                    diffuseLighting += saturate(dot(normalWS, light.direction)) * lightColor;
-                    reflectedVector = reflect(-light.direction, normalWS);
-                    specularLighting += pow(
-                        saturate(dot(reflectedVector, viewWS)), 
-                        pow(2.0f, _Glossiness)
-                    ) * lightColor;
+                float3 lightColor = light.distanceAttenuation
+                    * light.shadowAttenuation
+                    * light.color;
+
+                // 累加漫反射与镜面反射（菲涅尔通常仅对主光计算，避免多光源叠加过亮）
+                diffuseLighting += saturate(dot(normalWS, light.direction)) * lightColor;
+                reflectedVector = reflect(-light.direction, normalWS);
+                specularLighting += pow(
+                    saturate(dot(reflectedVector, viewWS)),
+                    pow(2.0f, _Glossiness)
+                ) * lightColor;
 
                 LIGHT_LOOP_END
 
@@ -194,9 +197,9 @@ Shader "Basics/AdditionalLighting"
 
                 // ===== 最终合成 =====
                 float4 baseColor = SAMPLE_TEXTURE2D(_BaseTexture, sampler_BaseTexture, i.uv) * _BaseColor;
-                float3 finalColor = (ambientLighting + diffuseLighting) * baseColor.rgb 
-                                  + specularLighting 
-                                  + fresnelLighting;
+                float3 finalColor = (ambientLighting + diffuseLighting) * baseColor.rgb
+                    + specularLighting
+                    + fresnelLighting;
                 return float4(finalColor, baseColor.a);
             }
             ENDHLSL
@@ -205,10 +208,13 @@ Shader "Basics/AdditionalLighting"
         // ==================== Pass 1-3: 辅助 Pass（结构同基础版）====================
         // ShadowCaster / DepthOnly / DepthNormals 与 BasicLighting 完全一致
         // 此处省略重复注释，仅保留必要结构
-        
+
         Pass
         {
-            Tags { "LightMode" = "ShadowCaster" }
+            Tags
+            {
+                "LightMode" = "ShadowCaster"
+            }
             ZWrite On
             ColorMask 0
             HLSLPROGRAM
@@ -220,57 +226,117 @@ Shader "Basics/AdditionalLighting"
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
             float3 _LightDirection;
             float3 _LightPosition;
-            struct appdata { float4 positionOS : POSITION; float3 normalOS : NORMAL; };
-            struct v2f { float4 positionCS : SV_POSITION; };
+
+            struct appdata
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS : NORMAL;
+            };
+
+            struct v2f
+            {
+                float4 positionCS : SV_POSITION;
+            };
+
             float4 GetShadowPositionHClip(float3 positionOS, float3 normalOS)
             {
                 float3 positionWS = TransformObjectToWorld(positionOS);
                 float3 normalWS = TransformObjectToWorldNormal(normalOS);
-            #if _CASTING_PUNCTUAL_LIGHT_SHADOW
+                #if _CASTING_PUNCTUAL_LIGHT_SHADOW
                 float3 lightDirectionWS = normalize(_LightPosition - positionWS);
-            #else
+                #else
                 float3 lightDirectionWS = _LightDirection;
-            #endif
+                #endif
                 float4 positionCS = TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, lightDirectionWS));
                 positionCS = ApplyShadowClamping(positionCS);
                 return positionCS;
             }
-            v2f shadowPassVert(appdata v) { v2f o = (v2f)0; o.positionCS = GetShadowPositionHClip(v.positionOS, v.normalOS); return o; }
+
+            v2f shadowPassVert(appdata v)
+            {
+                v2f o = (v2f)0;
+                o.positionCS = GetShadowPositionHClip(v.positionOS, v.normalOS);
+                return o;
+            }
+
             float4 shadowPassFrag(v2f i) : SV_TARGET { return 0; }
             ENDHLSL
         }
 
         Pass
         {
-            Tags { "LightMode" = "DepthOnly" }
+            Tags
+            {
+                "LightMode" = "DepthOnly"
+            }
             ZWrite On
             ColorMask R
             HLSLPROGRAM
             #pragma vertex depthOnlyVert
             #pragma fragment depthOnlyFrag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            struct appdata { float4 positionOS : POSITION; };
-            struct v2f { float4 positionCS : SV_POSITION; };
-            v2f depthOnlyVert(appdata v) { v2f o = (v2f)0; o.positionCS = TransformObjectToHClip(v.positionOS.xyz); return o; }
+
+            struct appdata
+            {
+                float4 positionOS : POSITION;
+            };
+
+            struct v2f
+            {
+                float4 positionCS : SV_POSITION;
+            };
+
+            v2f depthOnlyVert(appdata v)
+            {
+                v2f o = (v2f)0;
+                o.positionCS = TransformObjectToHClip(v.positionOS.xyz);
+                return o;
+            }
+
             float depthOnlyFrag(v2f i) : SV_TARGET { return i.positionCS.z; }
             ENDHLSL
         }
 
         Pass
         {
-            Tags { "LightMode" = "DepthNormals" }
+            Tags
+            {
+                "LightMode" = "DepthNormals"
+            }
             ZWrite On
             HLSLPROGRAM
             #pragma vertex depthNormalsVert
             #pragma fragment depthNormalsFrag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             CBUFFER_START(UnityPerMaterial)
-                float4 _BaseColor; float4 _BaseTexture_ST; float _NormalStrength;
-                float3 _AmbientLighting; float _Glossiness; float _FresnelPower; float _FresnelStrength;
+                float4 _BaseColor;
+                float4 _BaseTexture_ST;
+                float _NormalStrength;
+                float3 _AmbientLighting;
+                float _Glossiness;
+                float _FresnelPower;
+                float _FresnelStrength;
             CBUFFER_END
-            TEXTURE2D(_NormalTexture); SAMPLER(sampler_NormalTexture);
-            struct appdata { float4 positionOS : POSITION; float2 uv : TEXCOORD0; float3 normalOS : NORMAL; float4 tangentOS : TANGENT; };
-            struct v2f { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; float3 normalWS : TEXCOORD1; float4 tangentWS : TEXCOORD2; };
+
+            TEXTURE2D(_NormalTexture);
+            SAMPLER(sampler_NormalTexture);
+
+            struct appdata
+            {
+                float4 positionOS : POSITION;
+                float2 uv : TEXCOORD0;
+                float3 normalOS : NORMAL;
+                float4 tangentOS : TANGENT;
+            };
+
+            struct v2f
+            {
+                float4 positionCS : SV_POSITION;
+                float2 uv : TEXCOORD0;
+                float3 normalWS : TEXCOORD1;
+                float4 tangentWS : TEXCOORD2;
+            };
+
             v2f depthNormalsVert(appdata v)
             {
                 v2f o = (v2f)0;
@@ -281,10 +347,12 @@ Shader "Basics/AdditionalLighting"
                 o.tangentWS = float4(TransformObjectToWorldDir(v.tangentOS.xyz), v.tangentOS.w);
                 return o;
             }
+
             float4 depthNormalsFrag(v2f i) : SV_TARGET
             {
                 float3 normalWS = NormalizeNormalPerPixel(i.normalWS);
-                float3 normalTS = UnpackNormalScale(SAMPLE_TEXTURE2D(_NormalTexture, sampler_NormalTexture, i.uv), _NormalStrength);
+                float3 normalTS = UnpackNormalScale(
+                    SAMPLE_TEXTURE2D(_NormalTexture, sampler_NormalTexture, i.uv), _NormalStrength);
                 float3 binormalWS = cross(normalWS, i.tangentWS.xyz) * i.tangentWS.w * unity_WorldTransformParams.w;
                 normalWS = normalize(normalTS.x * i.tangentWS.xyz + normalTS.y * binormalWS + normalTS.z * normalWS);
                 return float4(normalWS, 0.0f);
