@@ -16,7 +16,7 @@ namespace ShaderBasics.Editor
         // ===== 属性描述符结构体 =====
         // 将 MaterialProperty 引用、显示标签、Tooltip、Shader Property ID 打包
         // 避免在 OnGUI 中反复调用 FindProperty / PropertyToID
-        private struct PBRShaderProperty
+        protected struct PBRShaderProperty
         {
             public MaterialProperty prop;      // 运行时从 properties[] 中查找的引用
             public readonly string name;       // Shader Properties 块中的变量名
@@ -128,20 +128,20 @@ namespace ShaderBasics.Editor
             "Determines chronological rendering order. Lower values render first.");
         private PBRShaderProperty queueControl = new("_QueueControl", "Queue Control",
             "Controls whether render queue is auto-set or user-overridden.");
-        
-        private const string missingEditorText = "No MaterialEditor found (PBRShaderGUI)";
+
+        protected const string missingEditorText = "No MaterialEditor found (PBRShaderGUI)";
         private const int queueOffsetRange = 50;
         
         // URP 提供的折叠面板管理器，支持持久化展开/收起状态
-        private readonly MaterialHeaderScopeList materialScopeList = new();
-        private MaterialEditor materialEditor;
-        private bool firstTimeOpen = true;
+        protected readonly MaterialHeaderScopeList materialScopeList = new();
+        protected MaterialEditor materialEditor;
+        protected bool firstTimeOpen = true;
         
         /// <summary>
         /// 从 MaterialProperty[] 中查找并绑定所有属性引用
         /// 每次 OnGUI 调用时执行（Unity 序列化系统要求）
         /// </summary>
-        private void FindProperties(MaterialProperty[] props)
+        protected virtual void FindProperties(MaterialProperty[] props)
         {
             baseColor.prop = FindProperty(baseColor.name, props, true);
             baseTexture.prop = FindProperty(baseTexture.name, props, true);
@@ -272,7 +272,7 @@ namespace ShaderBasics.Editor
         /// 绘制 Surface Options 面板
         /// 包含表面类型、混合模式、Alpha 裁剪、深度写入、阴影等核心渲染状态
         /// </summary>
-        private void DrawSurfaceProperties(Material material)
+        protected void DrawSurfaceProperties(Material material)
         {
             // 表面类型下拉框
             materialEditor.PopupShaderProperty(surface.prop, surface.info, surfaceTypeNames);
@@ -321,7 +321,7 @@ namespace ShaderBasics.Editor
                     // Opaque + AlphaTest → AlphaTest 队列 + _ALPHATEST_ON 关键字
                     material.EnableKeyword("_ALPHATEST_ON");
                     renderQueueValue = (int)RenderQueue.AlphaTest;       // 2450
-                    material.SetOverrideTag("RenderType", "AlphaTest");
+                    material.SetOverrideTag("RenderType", "TransparentCutout");
                     useAlphaToMask = true; // MSAA 下用 Alpha-to-Coverage 替代硬裁剪
                 }
                 else
@@ -394,7 +394,7 @@ namespace ShaderBasics.Editor
         /// 绘制 PBR Inputs 面板
         /// 根据工作流切换动态显示 Metallic 或 Specular 属性
         /// </summary>
-        private void DrawPBRProperties(Material material)
+        protected void DrawPBRProperties(Material material)
         {
             // Base Texture + Base Color 单行显示
             materialEditor.TexturePropertySingleLine(baseTexture.info, baseTexture.prop, baseColor.prop);
@@ -420,7 +420,7 @@ namespace ShaderBasics.Editor
         /// 绘制 Advanced Options 面板
         /// 渲染队列控制（Auto Offset / Manual Override）
         /// </summary>
-        private void DrawAdvancedSettings(Material material)
+        protected void DrawAdvancedSettings(Material material)
         {
             materialEditor.PopupShaderProperty(queueControl.prop, queueControl.info, queueControlNames);
 

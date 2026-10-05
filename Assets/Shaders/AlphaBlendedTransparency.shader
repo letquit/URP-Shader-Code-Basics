@@ -12,6 +12,10 @@ Shader "Basics/AlphaBlendedTransparency"
         // 值 10 = OneMinusSrcAlpha，即目标颜色乘以 (1 - 源Alpha) 作为混合权重
         // 默认组合 (5, 10) 构成标准 Alpha Blending：out = src * srcA + dst * (1 - srcA)
         [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend("Destination Blend Mode", Integer) = 10
+
+        // Part 3 作业：在 Alpha Blend 上再加 clip
+        // 低于阈值的片元直接丢弃，存活片元仍走上面的 Blend
+        _AlphaThreshold("Alpha Threshold", Range(0, 1)) = 0.5
     }
 
     SubShader
@@ -55,6 +59,7 @@ Shader "Basics/AlphaBlendedTransparency"
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseColor;
                 float4 _BaseTexture_ST;
+                float _AlphaThreshold;
             CBUFFER_END
 
             TEXTURE2D(_BaseTexture);
@@ -96,7 +101,13 @@ Shader "Basics/AlphaBlendedTransparency"
                 // Alpha 通道保留原始乘积结果，由硬件 Blend 单元在光栅化阶段执行混合
                 // 片元着色器输出的是“源颜色”，而非最终帧缓冲颜色
                 float4 textureColor = SAMPLE_TEXTURE2D(_BaseTexture, sampler_BaseTexture, i.uv);
-                return textureColor * _BaseColor;
+                float4 outputColor = textureColor * _BaseColor;
+
+                // clip(x) 在 x < 0 时丢弃片元，不写入颜色
+                // 这里先镂空，剩下的半透明像素再按 Blend 混合
+                clip(outputColor.a - _AlphaThreshold);
+
+                return outputColor;
             }
             ENDHLSL
         }

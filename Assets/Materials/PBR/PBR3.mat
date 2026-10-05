@@ -7,12 +7,13 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: PBR 1
+  m_Name: PBR3
   m_Shader: {fileID: 4800000, guid: 8d457fcb85866d1448131850d8dac3d8, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _CONVERT_FROM_ROUGHNESS
+  - _SPECULAR_SETUP
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -31,7 +32,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BaseTexture:
-        m_Texture: {fileID: 2800000, guid: 5e4b7e910cd3c4d45b03c9c5a13c00ca, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2bcbbb30e8a666545af17ba04c58472e, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
@@ -55,7 +56,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _HeightMap:
-        m_Texture: {fileID: 2800000, guid: 951050c34982e124bb03d65f4e40b6c2, type: 3}
+        m_Texture: {fileID: 2800000, guid: f2c23cbbfd06da64592bd962db9d1ebe, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
@@ -71,11 +72,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NormalTexture:
-        m_Texture: {fileID: 2800000, guid: e82a83e50bb1ebd479614b2b7ba84d2b, type: 3}
+        m_Texture: {fileID: 2800000, guid: 324b4de1855ea30459ced7dec3229c69, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
-        m_Texture: {fileID: 2800000, guid: a69bbe36ef8f4db419a41345972fbca9, type: 3}
+        m_Texture: {fileID: 10307, guid: 0000000000000000f000000000000000, type: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ParallaxMap:
@@ -83,7 +84,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SmoothnessMap:
-        m_Texture: {fileID: 2800000, guid: 219b8d807c9e90b4391d7d3d550faa69, type: 3}
+        m_Texture: {fileID: 2800000, guid: a3c4490ab285fa84f848fbb4debc1f2c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SpecGlossMap:
@@ -108,7 +109,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints:
     - _ConvertFromRoughness: 1
-    - _UseSpecularSetup: 0
+    - _UseSpecularSetup: 1
     m_Floats:
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 0
@@ -129,10 +130,10 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _HeightMapStrength: 0.1
+    - _HeightMapStrength: 0
     - _Metallic: 0
-    - _NormalStrength: 1
-    - _OcclusionStrength: 1
+    - _NormalStrength: 2
+    - _OcclusionStrength: 0
     - _Parallax: 0.005
     - _QueueControl: 0
     - _QueueOffset: 0
@@ -155,10 +156,10 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-    - _SpecularColor: {r: 0.1999999, g: 0.1999999, b: 0.1999999, a: 0.23529412}
+    - _SpecularColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!114 &5366452896168374662
+--- !u!114 &3568091385608299763
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
